@@ -151,8 +151,8 @@
       const srcLC  = tidy($('sourceId').value.toLowerCase());
       const pixel  = tidy($('pixelId').value);
       const geo    = tidy($('geoPrefix').value);
-      const brand  = tidy($('brand').value);
-      const item   = tidy($('item').value);
+      const brand  = tidy($('brand').value).replace(/\s+/g, '_');
+      const item   = tidy($('item').value).replace(/\s+/g, '_');
       const url    = tidy($('imageUrl').value);
 
       if (!validate(pid, offer, srcLC, geo, brand, item, pixel, url)) return;
