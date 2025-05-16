@@ -1,147 +1,108 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>TrafficJet Link Generator</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 600px;
-      margin: 40px auto;
-      padding: 20px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-    }
-    label {
-      display: block;
-      margin-top: 15px;
-    }
-    input[type="text"] {
-      width: 100%;
-      padding: 8px;
-      margin-top: 5px;
-    }
-    button {
-      margin-top: 20px;
-      padding: 10px 15px;
-      font-size: 16px;
-    }
-    .output {
-      margin-top: 20px;
-      word-break: break-all;
-      background: #f9f9f9;
-      padding: 10px;
-      border: 1px dashed #888;
-    }
-    .error {
-      color: red;
-      margin-top: 10px;
-    }
+    body{font-family:Arial,Helvetica,sans-serif;max-width:720px;margin:40px auto;padding:24px;border:1px solid #ccc;border-radius:10px;background:#fafafa}
+    h2{text-align:center;margin-top:0}
+    label{display:block;margin-top:14px;font-weight:600}
+    input{width:100%;padding:8px 10px;margin-top:4px;border:1px solid #bbb;border-radius:4px;font-size:14px}
+    /* только Source ID в верхнем регистре при вводе */
+    #sourceId{text-transform:uppercase}
+    .row{display:flex;gap:12px;margin-top:22px}
+    button{flex:1;padding:10px;font-size:15px;border:none;border-radius:4px;cursor:pointer}
+    .gen{background:#007acc;color:#fff}.copy{background:#4caf50;color:#fff}.reset{background:#f44336;color:#fff}
+    textarea{width:100%;min-height:140px;margin-top:20px;resize:vertical;padding:10px;font-family:monospace;font-size:13px;border:1px dashed #888;border-radius:4px;background:#f5f5f5;word-break:break-all}
+    .error{margin-top:12px;color:#d32f2f;font-weight:600}
   </style>
 </head>
 <body>
   <h2>TrafficJet Link Generator</h2>
 
-  <label>Offer ID:
-    <input type="text" id="offerId" placeholder="e.g. 121">
+  <label>PID
+    <input type="text" id="pid" placeholder="11, 17, 18">
   </label>
-  <label>Source ID:
-    <input type="text" id="sourceId" placeholder="e.g. B93">
+  <label>Offer ID
+    <input type="text" id="offerId" placeholder="121">
   </label>
-  <label>GEO Prefix:
-    <input type="text" id="geoPrefix" placeholder="e.g. +39">
+  <label>Source ID (все буквы заглавные)
+    <input type="text" id="sourceId" placeholder="B93 или B99-TNF">
   </label>
-  <label>Brand:
-    <input type="text" id="brand" placeholder="e.g. Douglas">
+  <label>GEO Prefix (опц.)
+    <input type="text" id="geoPrefix" placeholder="+39 или пусто">
   </label>
-  <label>Item:
-    <input type="text" id="item" placeholder="e.g. Set di cosmetici premium">
+  <label>Brand
+    <input type="text" id="brand" placeholder="Douglas">
   </label>
-  <label>Image URL:
-    <input type="text" id="imageUrl" placeholder="https://example.com/image.jpg">
+  <label>Item
+    <input type="text" id="item" placeholder="Set di cosmetici premium">
+  </label>
+  <label>Image URL (sub22, опц.)
+    <input type="text" id="imageUrl" placeholder="https://.../image.jpg">
   </label>
 
-  <button onclick="generateLink()">Сгенерировать ссылку</button>
+  <div class="row">
+    <button class="gen"  onclick="generate()">Сгенерировать</button>
+    <button class="copy" onclick="copyLink()">Копировать</button>
+    <button class="reset"onclick="resetAll()">Сбросить</button>
+  </div>
 
-  <div class="error" id="error"></div>
-  <div class="output" id="output"></div>
+  <div id="error" class="error"></div>
+  <textarea id="output" placeholder="Тут появится ссылка…"></textarea>
 
-  <script>
-    function validateInputs(offerId, sourceId, geoPrefix, brand, item, imageUrl) {
-      const errorEl = document.getElementById('error');
-      errorEl.textContent = '';
+<script>
+const $ = id => document.getElementById(id);
+const tidy = s => s.replace(/\s+/g,' ').trim();
 
-      if (!offerId || !/^[0-9]+$/.test(offerId)) {
-        errorEl.textContent = 'Некорректный Offer ID (только цифры).';
-        return false;
-      }
-
-      if (!sourceId || !/^[A-Z]+[0-9]+$/.test(sourceId)) {
-        errorEl.textContent = 'Source ID должен начинаться с заглавных букв и заканчиваться цифрами (например, B93).';
-        return false;
-      }
-
-      if (!geoPrefix || !/^\+\d{1,4}$/.test(geoPrefix)) {
-        errorEl.textContent = 'Некорректный GEO Prefix (например, +39).';
-        return false;
-      }
-
-      if (!brand.trim()) {
-        errorEl.textContent = 'Поле Brand не должно быть пустым.';
-        return false;
-      }
-
-      if (!item.trim()) {
-        errorEl.textContent = 'Поле Item не должно быть пустым.';
-        return false;
-      }
-
-      if (!/^https?:\/\/.+\..+/.test(imageUrl)) {
-        errorEl.textContent = 'Некорректный Image URL.';
-        return false;
-      }
-
-      return true;
-    }
-
-    function formatSourceId(rawId) {
-      return rawId.toUpperCase();
-    }
-
-    function generateLink() {
-      const offerId = document.getElementById('offerId').value.trim();
-      const sourceIdRaw = document.getElementById('sourceId').value.trim();
-      const geoPrefix = document.getElementById('geoPrefix').value.trim();
-      const brand = document.getElementById('brand').value.trim();
-      const item = document.getElementById('item').value.trim();
-      const imageUrl = document.getElementById('imageUrl').value.trim();
-
-      const sourceId = formatSourceId(sourceIdRaw);
-
-      if (!validateInputs(offerId, sourceId, geoPrefix, brand, item, imageUrl)) return;
-
-      const baseUrl = "https://trafficjet.trk2afse.com/click?pid=11";
-
-      const link =
-        baseUrl +
-        `&offer_id=${offerId}` +
-        `&sub1={subid}` +
-        `&sub2=PIXELFB` +
-        `&sub3=${sourceId}` +
-        `&sub30={sub_id_11}` +
-        `&sub29={sub_id_12}` +
-        `&sub25={sub_id_13}` +
-        `&sub26={sub_id_15}` +
-        `&sub24={sub_id_16}` +
-        `&sub27={sub_id_19}` +
-        `&sub28=${geoPrefix}{sub_id_21}` +
-        `&sub22=${encodeURIComponent(imageUrl)}` +
-        `&sub23=${encodeURIComponent(item + ' ' + brand)}` +
-        `&sub21=${encodeURIComponent(brand)}` +
-        `&sub19=${sourceId}`;
-
-      document.getElementById('output').innerText = link;
-    }
-  </script>
+function validate(pid,offer,src,geo,brand,item,url){
+  const e=$('error'); e.textContent='';
+  if(!/^[0-9]+$/.test(pid)){e.textContent='PID — цифры';return false;}
+  if(!/^[0-9]+$/.test(offer)){e.textContent='Offer ID — цифры';return false;}
+  if(!/^[A-Z0-9][A-Z0-9-]*$/.test(src)){e.textContent='Source ID — ЗАГЛАВНЫЕ буквы/цифры/«-»';return false;}
+  if(geo && !/^\+\d{1,4}$/.test(geo)){e.textContent='GEO Prefix — "+" и 1-4 цифры или пусто';return false;}
+  if(!brand){e.textContent='Brand пустой';return false;}
+  if(!item){e.textContent='Item пустой';return false;}
+  if(url && !/^https?:\/\//.test(url)){e.textContent='Image URL должен начинаться с http/https';return false;}
+  return true;
+}
+function sub19From(src){
+  const m=src.match(/^[A-Z]+[0-9]+/);
+  return m?m[0]:src;
+}
+function build(pid,offer,src,sub19,geo,brand,item,url){
+  const p=[
+    `offer_id=${offer}`,
+    'sub1={subid}',
+    'sub2=PIXELFB',
+    `sub3=${src}`,
+    'sub30={sub_id_11}',
+    'sub29={sub_id_12}',
+    'sub25={sub_id_13}',
+    'sub26={sub_id_15}',
+    'sub24={sub_id_16}',
+    'sub27={sub_id_19}',
+    `sub28=${geo?geo:''}{sub_id_21}`,
+    url?`sub22=${url}`:null,
+    `sub23=${item} ${brand}`,
+    `sub21=${brand}`,
+    `sub19=${sub19}`
+  ].filter(Boolean).join('&');
+  return `https://trafficjet.trk2afse.com/click?pid=${pid}&`+p;
+}
+function generate(){
+  const pid   = tidy($('pid').value);
+  const offer = tidy($('offerId').value);
+  const src   = tidy($('sourceId').value.toUpperCase());
+  const geo   = tidy($('geoPrefix').value);
+  const brand = tidy($('brand').value);
+  const item  = tidy($('item').value);
+  const url   = tidy($('imageUrl').value);
+  if(!validate(pid,offer,src,geo,brand,item,url))return;
+  $('output').value=build(pid,offer,src,sub19From(src),geo,brand,item,url);
+}
+function copyLink(){const o=$('output');if(!o.value)return;o.select();document.execCommand('copy');alert('Скопировано!');}
+function resetAll(){document.querySelectorAll('input').forEach(i=>i.value='');$('output').value='';$('error').textContent='';}
+</script>
 </body>
 </html>
