@@ -4,20 +4,49 @@
   <meta charset="UTF-8">
   <title>TrafficJet Link Generator</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px; }
-    label { display: block; margin-top: 15px; }
-    input[type="text"] { width: 100%; padding: 8px; margin-top: 5px; }
-    button { margin-top: 20px; padding: 10px 15px; font-size: 16px; }
-    .output { margin-top: 20px; word-break: break-all; background: #f9f9f9; padding: 10px; border: 1px dashed #888; }
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 15px;
+      font-size: 16px;
+    }
+    .output {
+      margin-top: 20px;
+      word-break: break-all;
+      background: #f9f9f9;
+      padding: 10px;
+      border: 1px dashed #888;
+    }
+    .error {
+      color: red;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
   <h2>TrafficJet Link Generator</h2>
+
   <label>Offer ID:
     <input type="text" id="offerId" placeholder="e.g. 121">
   </label>
   <label>Source ID:
-    <input type="text" id="sourceId" placeholder="e.g. b93">
+    <input type="text" id="sourceId" placeholder="e.g. B93">
   </label>
   <label>GEO Prefix:
     <input type="text" id="geoPrefix" placeholder="e.g. +39">
@@ -34,24 +63,82 @@
 
   <button onclick="generateLink()">Сгенерировать ссылку</button>
 
+  <div class="error" id="error"></div>
   <div class="output" id="output"></div>
 
   <script>
+    function validateInputs(offerId, sourceId, geoPrefix, brand, item, imageUrl) {
+      const errorEl = document.getElementById('error');
+      errorEl.textContent = '';
+
+      if (!offerId || !/^[0-9]+$/.test(offerId)) {
+        errorEl.textContent = 'Некорректный Offer ID (только цифры).';
+        return false;
+      }
+
+      if (!sourceId || !/^[A-Z]+[0-9]+$/.test(sourceId)) {
+        errorEl.textContent = 'Source ID должен начинаться с заглавных букв и заканчиваться цифрами (например, B93).';
+        return false;
+      }
+
+      if (!geoPrefix || !/^\+\d{1,4}$/.test(geoPrefix)) {
+        errorEl.textContent = 'Некорректный GEO Prefix (например, +39).';
+        return false;
+      }
+
+      if (!brand.trim()) {
+        errorEl.textContent = 'Поле Brand не должно быть пустым.';
+        return false;
+      }
+
+      if (!item.trim()) {
+        errorEl.textContent = 'Поле Item не должно быть пустым.';
+        return false;
+      }
+
+      if (!/^https?:\/\/.+\..+/.test(imageUrl)) {
+        errorEl.textContent = 'Некорректный Image URL.';
+        return false;
+      }
+
+      return true;
+    }
+
+    function formatSourceId(rawId) {
+      return rawId.toUpperCase();
+    }
+
     function generateLink() {
-      const offerId = document.getElementById('offerId').value;
-      const sourceId = document.getElementById('sourceId').value;
-      const geoPrefix = document.getElementById('geoPrefix').value;
-      const brand = document.getElementById('brand').value;
-      const item = document.getElementById('item').value;
-      const imageUrl = document.getElementById('imageUrl').value;
+      const offerId = document.getElementById('offerId').value.trim();
+      const sourceIdRaw = document.getElementById('sourceId').value.trim();
+      const geoPrefix = document.getElementById('geoPrefix').value.trim();
+      const brand = document.getElementById('brand').value.trim();
+      const item = document.getElementById('item').value.trim();
+      const imageUrl = document.getElementById('imageUrl').value.trim();
+
+      const sourceId = formatSourceId(sourceIdRaw);
+
+      if (!validateInputs(offerId, sourceId, geoPrefix, brand, item, imageUrl)) return;
 
       const baseUrl = "https://trafficjet.trk2afse.com/click?pid=11";
-      const link = `${baseUrl}&offer_id=${offerId}&sub1={subid}&sub2=PIXELFB&sub3=${sourceId}` +
-        `&sub30={sub_id_11}&sub29={sub_id_12}&sub25={sub_id_13}&sub26={sub_id_15}` +
-        `&sub24={sub_id_16}&sub27={sub_id_19}&sub28=${geoPrefix}{sub_id_21}` +
+
+      const link =
+        baseUrl +
+        `&offer_id=${offerId}` +
+        `&sub1={subid}` +
+        `&sub2=PIXELFB` +
+        `&sub3=${sourceId}` +
+        `&sub30={sub_id_11}` +
+        `&sub29={sub_id_12}` +
+        `&sub25={sub_id_13}` +
+        `&sub26={sub_id_15}` +
+        `&sub24={sub_id_16}` +
+        `&sub27={sub_id_19}` +
+        `&sub28=${geoPrefix}{sub_id_21}` +
         `&sub22=${encodeURIComponent(imageUrl)}` +
         `&sub23=${encodeURIComponent(item + ' ' + brand)}` +
-        `&sub21=${encodeURIComponent(brand)}&sub19=${sourceId}`;
+        `&sub21=${encodeURIComponent(brand)}` +
+        `&sub19=${sourceId}`;
 
       document.getElementById('output').innerText = link;
     }
