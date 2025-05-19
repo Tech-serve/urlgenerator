@@ -75,7 +75,7 @@
   <label>Offer ID (идентификатор оффера)
     <input type="text" id="offerId" placeholder="например 121">
   </label>
-  <label>Source ID (ID байера, строчные буквы/цифры/«-»)
+  <label>Source ID (ID браузера, строчные буквы/цифры/«-»)
     <input type="text" id="sourceId" placeholder="например b93 или b99-tnf">
   </label>
   <label>Pixel ID (sub2, опционально, если не указан — PIXELFB)
@@ -151,8 +151,8 @@
       const srcLC  = tidy($('sourceId').value.toLowerCase());
       const pixel  = tidy($('pixelId').value);
       const geo    = tidy($('geoPrefix').value);
-      const brand  = tidy($('brand').value).replace(/\s+/g, '_');
-      const item   = tidy($('item').value).replace(/\s+/g, '_');
+      const brand  = tidy($('brand').value);
+      const item   = tidy($('item').value);
       const url    = tidy($('imageUrl').value);
 
       if (!validate(pid, offer, srcLC, geo, brand, item, pixel, url)) return;
